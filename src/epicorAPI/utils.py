@@ -1,6 +1,11 @@
 import polars as pl
 from decimal import Decimal
 from datetime import datetime, date
+import os
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def sqlexec(cursor, sql_string: str) -> pl.DataFrame:
@@ -24,8 +29,13 @@ def sqlexec(cursor, sql_string: str) -> pl.DataFrame:
 
 
 def sqlexec_local(table_name, sql_string: str) -> pl.DataFrame:
-    df = pl.read_csv(f"../data/tables/{table_name}.csv", infer_schema_length=10000)
+    data_path = os.getenv("DATA_PATH")
+    df = pl.read_csv(f"{data_path}{table_name}.csv", infer_schema_length=10000)
     ctx = pl.SQLContext()
     ctx.register(table_name, df)
 
     return pl.DataFrame(ctx.execute(sql_string).collect())
+
+
+def print_price(num: float):
+    return f"${num:,.2f}"
