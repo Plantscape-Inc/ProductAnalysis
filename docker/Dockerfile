@@ -15,7 +15,6 @@ RUN poetry config virtualenvs.create false \
     && poetry install --no-root --no-interaction --no-ansi
 
 COPY ../src ./src
-COPY ../src/* ./src/*
 COPY ../pyproject.toml ./pyproject.toml
 COPY ../poetry.lock ./poetry.lock
 COPY ../.venv   ./.venv
