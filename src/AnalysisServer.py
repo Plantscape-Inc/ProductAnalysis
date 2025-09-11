@@ -9,9 +9,8 @@ import jwt
 import pymssql
 import polars as pl
 
-from epicorAPI.Orders import fetch_order, fetch_order_local
-from src.epicorAPI.CSIProductAnalysis import category_revenue, get_total_revenue, material_revenue, competitor_summary
-from src.epicorAPI.CSIProducts import get_competitor_sales, get_csi_sales
+from epicorAPI.CSIProductAnalysis import category_revenue, get_total_revenue, material_revenue, competitor_summary
+from epicorAPI.CSIProducts import get_competitor_sales, get_csi_sales
 
 load_dotenv()
 

@@ -1,14 +1,4 @@
-from datetime import datetime
-import json
-import os
-import re
-
-import altair as alt
-from dotenv import load_dotenv
-import pymssql
 import polars as pl
-
-from src.epicorAPI.Orders import sqlexec, sqlexec_local
 from src.epicorAPI.CSIProducts import categories, material_codes, competitors
 from src.epicorAPI.utils import print_price
 

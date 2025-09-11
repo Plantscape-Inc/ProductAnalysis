@@ -1,5 +1,5 @@
-sudo docker stop ProductAnalysis
-sudo docker rm ProductAnalysis
+docker stop ProductAnalysis
+docker rm ProductAnalysis
 docker build -t productanalysis:latest . -f docker/Dockerfile
 
 docker run -d --name ProductAnalysis -p 5005:5000 productanalysis:latest

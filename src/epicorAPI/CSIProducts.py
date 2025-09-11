@@ -1,9 +1,6 @@
 from datetime import datetime
-import json
-import os
 import re
 
-import altair as alt
 from dotenv import load_dotenv
 import pymssql
 import polars as pl
