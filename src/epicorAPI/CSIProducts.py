@@ -237,11 +237,15 @@ def fetch_orderdtl(cursor: pymssql.Cursor, startdate=None, enddate=None):
     )
 
 
-def get_csi_sales(cursor: pymssql.Cursor | None = None, startdate=None, enddate=None):
-    if not cursor:
-        df = fetch_orderdtl_local(startdate=startdate, enddate=enddate)
-    else:
-        df = fetch_orderdtl(cursor, startdate=startdate, enddate=enddate)
+def get_csi_sales(cursor: pymssql.Cursor | None = None,
+                  df: pl.DataFrame | None = None,
+                  startdate=None,
+                  enddate=None):
+    if df is None:
+        if cursor is None:
+            df = fetch_orderdtl_local(startdate=startdate, enddate=enddate)
+        else:
+            df = fetch_orderdtl(cursor, startdate=startdate, enddate=enddate)
 
     return (df
             .filter(
