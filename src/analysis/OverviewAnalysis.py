@@ -67,8 +67,6 @@ def overview_stats(df: pl.DataFrame, include_raw=False):
         & ~(pl.col("partnum").str.split("-").list.get(0).is_in(categories))
     ).select(['changedate', 'ordernum', 'partnum', 'unitprice'])
 
-    csilk_orders.write_csv("C:/Users/Ben/Desktop/CSILK-Orders.csv")
-
     result['brandLineItemsCount'] = {
         "csi": len(csi_orders),
         "csilk": len(csilk_orders),
