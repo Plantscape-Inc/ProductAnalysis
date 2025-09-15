@@ -26,6 +26,7 @@ def monthly_counts(df: pl.DataFrame) -> pl.DataFrame:
         .select("yearMonth", "count")
     )
 
+
 def monthly_revenue_counts(df: pl.DataFrame) -> pl.DataFrame:
     return (
         df.with_columns(
@@ -43,6 +44,14 @@ def monthly_revenue_counts(df: pl.DataFrame) -> pl.DataFrame:
 
 def overview_stats(df: pl.DataFrame, include_raw=False):
     result = {}
+
+    df = df.filter(
+        ~pl.col("partnum").str.to_lowercase().str.starts_with("x1")
+         & ~pl.col("partnum").str.to_lowercase().str.starts_with("xsh")
+         & ~pl.col("partnum").str.to_lowercase().str.starts_with("misc")
+         & ~pl.col("partnum").str.to_lowercase().str.starts_with("exped")
+    )
+
     csi_orders = df.filter(
         (pl.col("partnum").str.starts_with("CSI-"))
         | (pl.col("partnum").str.split("-").list.get(0).is_in(categories))
@@ -57,6 +66,8 @@ def overview_stats(df: pl.DataFrame, include_raw=False):
         (~pl.col("partnum").str.starts_with("CSI-"))
         & ~(pl.col("partnum").str.split("-").list.get(0).is_in(categories))
     ).select(['changedate', 'ordernum', 'partnum', 'unitprice'])
+
+    csilk_orders.write_csv("C:/Users/Ben/Desktop/CSILK-Orders.csv")
 
     result['brandLineItemsCount'] = {
         "csi": len(csi_orders),
@@ -81,6 +92,6 @@ def overview_stats(df: pl.DataFrame, include_raw=False):
 
     if include_raw:
         result['csiTimeseries'] = csi_orders.to_dicts()
-        result['csilkTimeseries'] = csilk_orders.to_dicts()
+    result['csilkTimeseries'] = csilk_orders.to_dicts()
 
     return result

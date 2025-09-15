@@ -57,7 +57,7 @@ def brands_overview_route():
         request.args.keys()) else datetime(2022, 1, 1)
     enddate = datetime.fromisoformat(request.args.get("endDate")) if "endDate" in list(
         request.args.keys()) else datetime.today().date()
-    local = True  # if "local" in list(request.args.keys()) and str(request.args["local"]).lower() in ['true', '1', 'yes'] else False
+    local = False #if "local" in list(request.args.keys()) and str(request.args["local"]).lower() in ['true', '1', 'yes'] else False
 
     include_raw = False if "includeRaw" in list(request.args.keys()) and str(
         request.args["includeRaw"]).lower() in ['false', '0', 'no'] else True
