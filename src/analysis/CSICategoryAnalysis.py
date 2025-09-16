@@ -131,9 +131,9 @@ def get_csi_category_total_counts(df: pl.DataFrame):
         .group_by(["categoryid"])
         .agg(pl.col("cost").count().alias("totalCount"))
         .with_columns(
-            (
-                pl.col("totalCount") / pl.col("totalCount").sum() * 100
-            ).alias("percentage")
+            (pl.col("totalCount") / pl.col("totalCount").sum() * 100).alias(
+                "percentage"
+            )
         )
         .sort(["categoryid"])
         .select("categoryid", "totalCount", "percentage")
@@ -146,9 +146,9 @@ def get_csi_category_total_revenues(df: pl.DataFrame):
         .group_by(["categoryid"])
         .agg(pl.col("cost").sum().alias("totalRevenue"))
         .with_columns(
-            (
-                pl.col("totalRevenue") / pl.col("totalRevenue").sum() * 100
-            ).alias("percentage")
+            (pl.col("totalRevenue") / pl.col("totalRevenue").sum() * 100).alias(
+                "percentage"
+            )
         )
         .sort(["categoryid"])
         .select("categoryid", "totalRevenue", "percentage")
@@ -164,8 +164,16 @@ def get_mics_totals(df: pl.DataFrame):
         )
         .with_columns(
             [
-                pl.when(pl.col("partnum").str.to_lowercase().str.contains("ship"))
-                .then(pl.lit("ship"))
+                pl.when(pl.col("partnum").str.to_lowercase().eq("x1ship"))
+                .then(pl.lit("x1ship"))
+                .when(pl.col("partnum").str.to_lowercase().eq("x1shipcsi"))
+                .then(pl.lit("x1shipcsi"))
+                .when(
+                    (~pl.col("partnum").str.to_lowercase().eq("x1ship"))
+                    & (~pl.col("partnum").str.to_lowercase().eq("x1shipcsi"))
+                    & (pl.col("partnum").str.to_lowercase().str.contains("ship"))
+                )
+                .then(pl.lit("shipmisc"))
                 .when(pl.col("partnum").str.to_lowercase().str.contains("sys"))
                 .then(pl.lit("sys"))
                 .when(pl.col("partnum").str.to_lowercase().str.contains("hdw"))
@@ -176,8 +184,6 @@ def get_mics_totals(df: pl.DataFrame):
         .group_by("category")
         .agg([pl.len().alias("count"), pl.sum("unitprice").alias("revenue")])
     )
-
-
 
 
 def csi_category_overview_analysis(df: pl.DataFrame):
@@ -195,7 +201,7 @@ def csi_category_overview_analysis(df: pl.DataFrame):
 
     result = {"overview": {}}
 
-    result['overview']['misc'] = get_mics_totals(df=df).to_dicts()
+    result["overview"]["misc"] = get_mics_totals(df=df).to_dicts()
 
     result["overview"]["categoryTotalCounts"] = to_json_grouped_by_category(
         get_csi_category_total_counts(csi_products_df)
@@ -203,7 +209,6 @@ def csi_category_overview_analysis(df: pl.DataFrame):
     result["overview"]["categoryTotalRevenues"] = to_json_grouped_by_category(
         get_csi_category_total_revenues(csi_products_df)
     )
-
 
     result["overview"]["categoryYearlyCounts"] = to_json_grouped_by_year(
         get_csi_category_yearly_counts(csi_products_df)
