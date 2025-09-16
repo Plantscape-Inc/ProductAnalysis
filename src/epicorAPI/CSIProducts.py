@@ -8,17 +8,19 @@ from src.epicorAPI.Orders import sqlexec, sqlexec_local
 
 load_dotenv()
 
-categories = ['SUR',
-              'LED',
-              'DVD',
-              'HDW',
-              'BIO',
-              'LBR',
-              'BFL',
-              'CLD',
-              'SYS',
-              'DSGNSER',
-              'GRD']
+categories = [
+    "SUR",
+    "LED",
+    "DVD",
+    "HDW",
+    "BIO",
+    "LBR",
+    "BFL",
+    "CLD",
+    "SYS",
+    "DSGNSER",
+    "GRD",
+]
 
 # categories = [
 #     'BFL',
@@ -93,7 +95,7 @@ subcategories = {
         "DRP",
         "SEC",
         "DRS",
-    ]
+    ],
 }
 
 material_codes = ["PSH", "SND", "SWT"]
@@ -171,7 +173,7 @@ competitors = {
     "UV": "Unika Vaev",
     "WG": "Wolf Gordon",
     "WO": "Woven Image",
-    "ZI": "Zintra"
+    "ZI": "Zintra",
 }
 
 
@@ -215,39 +217,46 @@ def fetch_orderdtl_local(startdate=None, enddate=None):
     startdate: datetime = startdate if startdate else datetime(2022, 1, 1)
     enddate: datetime = enddate if enddate else datetime.today().date()
 
-    order_dtl = sqlexec_local("orderdtl", f"""SELECT *
+    order_dtl = sqlexec_local(
+        "orderdtl",
+        f"""SELECT *
                    FROM orderdtl
                    WHERE changedate BETWEEN '{startdate}' and '{enddate}'
-    """)
+    """,
+    )
 
-    return (order_dtl
-    .with_columns(
+    return order_dtl.with_columns(
         pl.col("requestdate").str.strptime(pl.Datetime, "%Y-%m-%dT%H:%M:%S%.f"),
         pl.col("changedate").str.strptime(pl.Datetime, "%Y-%m-%dT%H:%M:%S%.f"),
-        pl.col("partnum").str.replace(" ", "")
-    ))
+        pl.col("partnum").str.replace(" ", ""),
+    )
 
 
 def fetch_orderdtl(cursor: pymssql.Cursor, startdate=None, enddate=None):
     startdate: datetime = startdate if startdate else datetime(2022, 1, 1)
     enddate: datetime = enddate if enddate else datetime.today().date()
 
-    order_dtl = sqlexec(cursor, f"""SELECT *
+    order_dtl = sqlexec(
+        cursor,
+        f"""SELECT *
                    FROM orderdtl
                   WHERE changedate BETWEEN '{startdate}' and '{enddate}'
-    """)
+    """,
+    )
 
     return order_dtl.with_columns(
         pl.col("requestdate").str.strptime(pl.Datetime, "%Y-%m-%dT%H:%M:%S%.f"),
         pl.col("changedate").str.strptime(pl.Datetime, "%Y-%m-%dT%H:%M:%S%.f"),
-        pl.col("partnum").str.replace(" ", "")
+        pl.col("partnum").str.replace(" ", ""),
     )
 
 
-def get_csi_sales(cursor: pymssql.Cursor | None = None,
-                  df: pl.DataFrame | None = None,
-                  startdate=None,
-                  enddate=None):
+def get_csi_sales(
+    cursor: pymssql.Cursor | None = None,
+    df: pl.DataFrame | None = None,
+    startdate=None,
+    enddate=None,
+):
     if df is None:
         if cursor is None:
             df = fetch_orderdtl_local(startdate=startdate, enddate=enddate)
@@ -256,33 +265,39 @@ def get_csi_sales(cursor: pymssql.Cursor | None = None,
 
     print(categories)
 
-    return (df
-            .filter(
-        (pl.col("partnum").str.starts_with("CSI-"))
-        | (pl.col("partnum").str.split("-").list.get(0).is_in(categories))
+    return (
+        df.filter(
+            (pl.col("partnum").str.starts_with("CSI-"))
+            | (pl.col("partnum").str.split("-").list.get(0).is_in(categories))
+        )
+        .with_columns(
+            pl.when(pl.col("partnum").str.starts_with("CSI-"))
+            .then(pl.col("partnum").str.slice(4))  # remove "CSI-"
+            .otherwise(pl.col("partnum"))
+            .alias("partnum")
+        )
+        .filter(pl.col("partnum").str.split("-").list.get(0).is_in(categories))
+        .select(["changedate", "ordernum", "partnum", "unitprice", "linedesc"])
     )
-            .with_columns(
-        pl.when(pl.col("partnum").str.starts_with("CSI-"))
-        .then(pl.col("partnum").str.slice(4))  # remove "CSI-"
-        .otherwise(pl.col("partnum"))
-        .alias("partnum")
-    )
-            .filter(pl.col("partnum").str.split("-").list.get(0).is_in(categories))
-            .select(["changedate", "ordernum", "partnum", "unitprice", "linedesc"])
-            )
 
 
-def get_competitor_sales(cursor: pymssql.Cursor | None = None, startdate=None, enddate=None):
+def get_competitor_sales(
+    cursor: pymssql.Cursor | None = None, startdate=None, enddate=None
+):
     csi_sales = get_csi_sales(cursor, startdate=startdate, enddate=enddate)
     return csi_sales.filter(
         pl.any_horizontal(
             pl.col("partnum")
             .str.split_exact("-", 2)
-            .struct[2].str.starts_with(competitor) for competitor in list(competitors.keys())
+            .struct[2]
+            .str.starts_with(competitor)
+            for competitor in list(competitors.keys())
         )
     )
 
 
 if __name__ == "__main__":
-    csi_products = get_csi_sales(startdate=datetime(2025, 7, 1), enddate=datetime(2025, 7, 6))
+    csi_products = get_csi_sales(
+        startdate=datetime(2025, 7, 1), enddate=datetime(2025, 7, 6)
+    )
     print(csi_products)

@@ -25,7 +25,9 @@ def sqlexec(cursor, sql_string: str) -> pl.DataFrame:
                 clean_row.append(v)
         clean_rows.append(clean_row)
 
-    return pl.DataFrame(clean_rows, columns, orient="row", infer_schema_length=len(clean_rows))
+    return pl.DataFrame(
+        clean_rows, columns, orient="row", infer_schema_length=len(clean_rows)
+    )
 
 
 def sqlexec_local(table_name, sql_string: str) -> pl.DataFrame:

@@ -33,7 +33,7 @@ def authenticate(**options):
             token = auth_header.split(" ")[1]
             try:
                 payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
-                if payload['sub'] not in authed_users:
+                if payload["sub"] not in authed_users:
                     return jsonify({"error": "unauthorized"}), 412
 
                 return func(*args, **kwargs)
@@ -54,20 +54,38 @@ def index():
 
 @app.route("/brandsOverview", methods=["GET"])
 def brands_overview_route():
-    startdate = datetime.fromisoformat(request.args.get("startDate")) if "startDate" in list(
-        request.args.keys()) else datetime(2022, 1, 1)
-    enddate = datetime.fromisoformat(request.args.get("endDate")) if "endDate" in list(
-        request.args.keys()) else datetime.today().date()
-    local = False  # if "local" in list(request.args.keys()) and str(request.args["local"]).lower() in ['true', '1', 'yes'] else False
+    startdate = (
+        datetime.fromisoformat(request.args.get("startDate"))
+        if "startDate" in list(request.args.keys())
+        else datetime(2022, 1, 1)
+    )
+    enddate = (
+        datetime.fromisoformat(request.args.get("endDate"))
+        if "endDate" in list(request.args.keys())
+        else datetime.today().date()
+    )
+    local = (
+        True
+        if "local" in list(request.args.keys())
+        and str(request.args["local"]).lower() in ["true", "1", "yes"]
+        else False
+    )
 
-    include_raw = False if "includeRaw" in list(request.args.keys()) and str(
-        request.args["includeRaw"]).lower() in ['false', '0', 'no'] else True
+    include_raw = (
+        False
+        if "includeRaw" in list(request.args.keys())
+        and str(request.args["includeRaw"]).lower() in ["false", "0", "no"]
+        else True
+    )
 
     if local:
-        order_dtl = sqlexec_local("orderdtl", f"""SELECT *
+        order_dtl = sqlexec_local(
+            "orderdtl",
+            f"""SELECT *
                        FROM orderdtl
                       WHERE changedate BETWEEN '{startdate}' and '{enddate}'
-        """)
+        """,
+        )
     else:
         conn = pymssql.connect(
             server=os.getenv("EPICOR_SERVER"),
@@ -75,29 +93,46 @@ def brands_overview_route():
             password=os.getenv("EPICOR_PASSWORD"),
             database=os.getenv("EPICOR_DATABASE"),
             port=os.getenv("EPICOR_PORT"),
-            tds_version=str(os.getenv("EPICOR_TDS_VERSION"))
+            tds_version=str(os.getenv("EPICOR_TDS_VERSION")),
         )
-        order_dtl = sqlexec(conn.cursor(), f"""SELECT *
+        order_dtl = sqlexec(
+            conn.cursor(),
+            f"""SELECT *
                        FROM orderdtl
                       WHERE changedate BETWEEN '{startdate}' and '{enddate}'
-        """)
+        """,
+        )
 
     return jsonify(overview_stats(order_dtl, include_raw))
 
 
 @app.route("/csiCategoriesOverview", methods=["GET"])
 def csi_categories_overview_route():
-    startdate = datetime.fromisoformat(request.args.get("startDate")) if "startDate" in list(
-        request.args.keys()) else datetime(2022, 1, 1)
-    enddate = datetime.fromisoformat(request.args.get("endDate")) if "endDate" in list(
-        request.args.keys()) else datetime.today().date()
-    local = True  # if "local" in list(request.args.keys()) and str(request.args["local"]).lower() in ['true', '1', 'yes'] else False
+    startdate = (
+        datetime.fromisoformat(request.args.get("startDate"))
+        if "startDate" in list(request.args.keys())
+        else datetime(2022, 1, 1)
+    )
+    enddate = (
+        datetime.fromisoformat(request.args.get("endDate"))
+        if "endDate" in list(request.args.keys())
+        else datetime.today().date()
+    )
+    local = (
+        True
+        if "local" in list(request.args.keys())
+        and str(request.args["local"]).lower() in ["true", "1", "yes"]
+        else False
+    )
 
     if local:
-        order_dtl = sqlexec_local("orderdtl", f"""SELECT *
+        order_dtl = sqlexec_local(
+            "orderdtl",
+            f"""SELECT *
                        FROM orderdtl
                       WHERE changedate BETWEEN '{startdate}' and '{enddate}'
-        """)
+        """,
+        )
     else:
         conn = pymssql.connect(
             server=os.getenv("EPICOR_SERVER"),
@@ -105,16 +140,17 @@ def csi_categories_overview_route():
             password=os.getenv("EPICOR_PASSWORD"),
             database=os.getenv("EPICOR_DATABASE"),
             port=os.getenv("EPICOR_PORT"),
-            tds_version=str(os.getenv("EPICOR_TDS_VERSION"))
+            tds_version=str(os.getenv("EPICOR_TDS_VERSION")),
         )
-        order_dtl = sqlexec(conn.cursor(), f"""SELECT *
+        order_dtl = sqlexec(
+            conn.cursor(),
+            f"""SELECT *
                        FROM orderdtl
                       WHERE changedate BETWEEN '{startdate}' and '{enddate}'
-        """)
+        """,
+        )
 
     temp = csi_category_overview_analysis(df=order_dtl)
-
-    print(temp)
 
     return jsonify(temp)
 

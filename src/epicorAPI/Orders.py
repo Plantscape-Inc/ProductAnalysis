@@ -60,7 +60,7 @@ def trimmed_dtl(df: pl.DataFrame) -> pl.DataFrame:
         "reversecharge",
         "totalreleases",
         "PROGRESS_RECID",
-        "PROGRESS_RECID_IDENT_"
+        "PROGRESS_RECID_IDENT_",
     ]
 
     return df.select(columns)
@@ -97,7 +97,7 @@ def trimmed_rel(df: pl.DataFrame) -> pl.DataFrame:
         "taxconnectcalc",
         "getdflttaxids",
         "PROGRESS_RECID",
-        "PROGRESS_RECID_IDENT_"
+        "PROGRESS_RECID_IDENT_",
     ]
 
     return df.select(columns)
@@ -183,7 +183,7 @@ def trimmed_hed(df: pl.DataFrame) -> pl.DataFrame:
         "totalcommlines",
         "srcommableamt1",
         "PROGRESS_RECID",
-        "PROGRESS_RECID_IDENT_"
+        "PROGRESS_RECID_IDENT_",
     ]
 
     return df.select(columns)
@@ -229,7 +229,7 @@ def clean_dtl(df: pl.DataFrame) -> pl.DataFrame:
         "reversecharge",
         "totalreleases",
         "PROGRESS_RECID",
-        "PROGRESS_RECID_IDENT_"
+        "PROGRESS_RECID_IDENT_",
     ]
 
     return df.select(columns)
@@ -266,7 +266,7 @@ def clean_rel(df: pl.DataFrame) -> pl.DataFrame:
         "taxconnectcalc",
         "getdflttaxids",
         "PROGRESS_RECID",
-        "PROGRESS_RECID_IDENT_"
+        "PROGRESS_RECID_IDENT_",
     ]
 
     return df.select(columns)
@@ -352,7 +352,7 @@ def clean_hed(df: pl.DataFrame) -> pl.DataFrame:
         "totalcommlines",
         "srcommableamt1",
         "PROGRESS_RECID",
-        "PROGRESS_RECID_IDENT_"
+        "PROGRESS_RECID_IDENT_",
     ]
 
     return df.select(columns)
@@ -361,19 +361,28 @@ def clean_hed(df: pl.DataFrame) -> pl.DataFrame:
 def fetch_order(connection: pymssql._pymssql.Connection, order_id: str, clean=False):
     cursor = connection.cursor()
 
-    order_dtl = sqlexec(cursor, f"""SELECT *
+    order_dtl = sqlexec(
+        cursor,
+        f"""SELECT *
                    FROM orderdtl
-                   where ordernum = {order_id};""")
+                   where ordernum = {order_id};""",
+    )
 
-    order_rel = sqlexec(cursor, f"""SELECT *
+    order_rel = sqlexec(
+        cursor,
+        f"""SELECT *
                    FROM orderrel
-                   where ordernum = {order_id};""")
+                   where ordernum = {order_id};""",
+    )
 
-    order_hed = sqlexec(cursor, f"""SELECT *
+    order_hed = sqlexec(
+        cursor,
+        f"""SELECT *
                    FROM orderhed
-                   where ordernum = {order_id};""")
+                   where ordernum = {order_id};""",
+    )
 
-    custnum = order_dtl['custnum'][0]
+    custnum = order_dtl["custnum"][0]
 
     order_ship = fetch_order(connection, custnum, clean=clean)
 
@@ -386,23 +395,37 @@ def fetch_order(connection: pymssql._pymssql.Connection, order_id: str, clean=Fa
     order_rel = order_rel.to_dicts()
     order_hed = order_hed.to_dicts()
 
-    return {"orderhed": order_hed[0], "orderdtl": order_dtl, "orderrel": order_rel, "order_shipping": order_ship}
+    return {
+        "orderhed": order_hed[0],
+        "orderdtl": order_dtl,
+        "orderrel": order_rel,
+        "order_shipping": order_ship,
+    }
 
 
 def fetch_order_local(order_id: str, clean=False):
-    order_dtl = sqlexec_local("orderdtl", f"""SELECT *
+    order_dtl = sqlexec_local(
+        "orderdtl",
+        f"""SELECT *
                    FROM orderdtl
-                   where ordernum = {order_id};""")
+                   where ordernum = {order_id};""",
+    )
 
-    order_rel = sqlexec_local("orderrel", f"""SELECT *
+    order_rel = sqlexec_local(
+        "orderrel",
+        f"""SELECT *
                    FROM orderrel
-                   where ordernum = {order_id};""")
+                   where ordernum = {order_id};""",
+    )
 
-    order_hed = sqlexec_local("orderhed", f"""SELECT *
+    order_hed = sqlexec_local(
+        "orderhed",
+        f"""SELECT *
                    FROM orderhed
-                   where ordernum = {order_id};""")
+                   where ordernum = {order_id};""",
+    )
 
-    custnum = order_hed['custnum'][0]
+    custnum = order_hed["custnum"][0]
 
     customer = fetch_customer_local(custnum, clean=clean)
 
@@ -415,24 +438,34 @@ def fetch_order_local(order_id: str, clean=False):
     order_rel = order_rel.to_dicts()
     order_hed = order_hed.to_dicts()
 
-    return {"orderhed": order_hed[0], "orderdtl": order_dtl, "orderrel": order_rel, "customerInfo": customer}
+    return {
+        "orderhed": order_hed[0],
+        "orderdtl": order_dtl,
+        "orderrel": order_rel,
+        "customerInfo": customer,
+    }
 
 
 def fetch_customer(connection: pymssql._pymssql.Connection, custid: str, clean=False):
     cursor = connection.cursor()
-    customer = sqlexec(cursor, f"""
+    customer = sqlexec(
+        cursor,
+        f"""
         SELECT * FROM customer WHERE custnum = '{custid.strip()}';
-    """)
+    """,
+    )
 
     return customer.to_dicts()[0] if len(customer) > 0 else None
 
 
 def fetch_customer_local(custid: str, clean=False):
-    customer = sqlexec_local("customer",
-                             f"""
-                SELECT * from customer WHERE custnum = {custid};"""
-                             )
+    customer = sqlexec_local(
+        "customer",
+        f"""
+                SELECT * from customer WHERE custnum = {custid};""",
+    )
 
     return customer.to_dicts()[0]
+
 
 # 20927
