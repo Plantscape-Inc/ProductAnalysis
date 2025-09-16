@@ -57,7 +57,7 @@ def overview_stats(df: pl.DataFrame, include_raw=False):
         | (pl.col("partnum").str.split("-").list.get(0).is_in(categories))
     ).with_columns(
         pl.when(pl.col("partnum").str.starts_with("CSI-"))
-        .then(pl.col("partnum").str.slice(4))  # remove "CSI-"
+        .then(pl.col("partnum").str.slice(4))
         .otherwise(pl.col("partnum"))
         .alias("partnum")
     ).select(['changedate', 'ordernum', 'partnum', 'unitprice'])
@@ -90,6 +90,6 @@ def overview_stats(df: pl.DataFrame, include_raw=False):
 
     if include_raw:
         result['csiTimeseries'] = csi_orders.to_dicts()
-    result['csilkTimeseries'] = csilk_orders.to_dicts()
+        result['csilkTimeseries'] = csilk_orders.to_dicts()
 
     return result

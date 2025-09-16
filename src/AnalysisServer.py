@@ -8,6 +8,7 @@ from flask_cors import CORS
 import jwt
 import pymssql
 
+from src.analysis.CSICategoryAnalysis import csi_category_overview_analysis
 from src.analysis.OverviewAnalysis import overview_stats
 from src.epicorAPI.utils import sqlexec, sqlexec_local
 
@@ -57,7 +58,7 @@ def brands_overview_route():
         request.args.keys()) else datetime(2022, 1, 1)
     enddate = datetime.fromisoformat(request.args.get("endDate")) if "endDate" in list(
         request.args.keys()) else datetime.today().date()
-    local = False #if "local" in list(request.args.keys()) and str(request.args["local"]).lower() in ['true', '1', 'yes'] else False
+    local = False  # if "local" in list(request.args.keys()) and str(request.args["local"]).lower() in ['true', '1', 'yes'] else False
 
     include_raw = False if "includeRaw" in list(request.args.keys()) and str(
         request.args["includeRaw"]).lower() in ['false', '0', 'no'] else True
@@ -82,6 +83,40 @@ def brands_overview_route():
         """)
 
     return jsonify(overview_stats(order_dtl, include_raw))
+
+
+@app.route("/csiCategoriesOverview", methods=["GET"])
+def csi_categories_overview_route():
+    startdate = datetime.fromisoformat(request.args.get("startDate")) if "startDate" in list(
+        request.args.keys()) else datetime(2022, 1, 1)
+    enddate = datetime.fromisoformat(request.args.get("endDate")) if "endDate" in list(
+        request.args.keys()) else datetime.today().date()
+    local = True  # if "local" in list(request.args.keys()) and str(request.args["local"]).lower() in ['true', '1', 'yes'] else False
+
+    if local:
+        order_dtl = sqlexec_local("orderdtl", f"""SELECT *
+                       FROM orderdtl
+                      WHERE changedate BETWEEN '{startdate}' and '{enddate}'
+        """)
+    else:
+        conn = pymssql.connect(
+            server=os.getenv("EPICOR_SERVER"),
+            user=os.getenv("EPICOR_USER"),
+            password=os.getenv("EPICOR_PASSWORD"),
+            database=os.getenv("EPICOR_DATABASE"),
+            port=os.getenv("EPICOR_PORT"),
+            tds_version=str(os.getenv("EPICOR_TDS_VERSION"))
+        )
+        order_dtl = sqlexec(conn.cursor(), f"""SELECT *
+                       FROM orderdtl
+                      WHERE changedate BETWEEN '{startdate}' and '{enddate}'
+        """)
+
+    temp = csi_category_overview_analysis(df=order_dtl)
+
+    print(temp)
+
+    return jsonify(temp)
 
 
 if __name__ == "__main__":

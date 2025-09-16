@@ -4,7 +4,6 @@ import re
 from dotenv import load_dotenv
 import pymssql
 import polars as pl
-
 from src.epicorAPI.Orders import sqlexec, sqlexec_local
 
 load_dotenv()
@@ -20,6 +19,14 @@ categories = ['SUR',
               'SYS',
               'DSGNSER',
               'GRD']
+
+# categories = [
+#     'BFL',
+#     'CLD',
+#     'GRD',
+#     'SUR',
+#     'DVD',
+# ]
 
 subcategories = {
     "BFL": [
@@ -89,7 +96,7 @@ subcategories = {
     ]
 }
 
-material_codes = ["PSH", "SND", "SWT", "SWT2"]
+material_codes = ["PSH", "SND", "SWT"]
 
 competitors = {
     "3F": "3form",
@@ -180,7 +187,7 @@ class CSIPart(object):
         if part[0] == "CSI":
             part.remove("CSI")
 
-        self.category_id = part[0]
+        self.categoryid = part[0]
 
         if part[1] == "CUST":
             self.custom = True
@@ -247,6 +254,8 @@ def get_csi_sales(cursor: pymssql.Cursor | None = None,
         else:
             df = fetch_orderdtl(cursor, startdate=startdate, enddate=enddate)
 
+    print(categories)
+
     return (df
             .filter(
         (pl.col("partnum").str.starts_with("CSI-"))
@@ -258,6 +267,7 @@ def get_csi_sales(cursor: pymssql.Cursor | None = None,
         .otherwise(pl.col("partnum"))
         .alias("partnum")
     )
+            .filter(pl.col("partnum").str.split("-").list.get(0).is_in(categories))
             .select(["changedate", "ordernum", "partnum", "unitprice", "linedesc"])
             )
 
